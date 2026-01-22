@@ -24,6 +24,7 @@ export const Hero3D = ({ onAnimationComplete }: Hero3DProps) => {
   const titleRef = useRef<HTMLDivElement>(null);
   const subtitleRef = useRef<HTMLParagraphElement>(null);
   const scrollIndicatorRef = useRef<HTMLDivElement>(null);
+  const welcomeRef = useRef<HTMLDivElement>(null);
   const [isComplete, setIsComplete] = useState(false);
 
   useEffect(() => {
@@ -46,6 +47,16 @@ export const Hero3D = ({ onAnimationComplete }: Hero3DProps) => {
           },
         },
       });
+
+      // Welcome message fades out at the start
+      if (welcomeRef.current) {
+        tl.fromTo(
+          welcomeRef.current,
+          { opacity: 1, scale: 1, filter: 'blur(0px)' },
+          { opacity: 0, scale: 1.2, filter: 'blur(10px)', duration: 0.3, ease: 'power2.in' },
+          0
+        );
+      }
 
       // Animate each flying word
       itemsRef.current.forEach((item, i) => {
@@ -207,6 +218,21 @@ export const Hero3D = ({ onAnimationComplete }: Hero3DProps) => {
               <motion.div className="w-1 h-2 bg-[#00FF41] rounded-full" />
             </motion.div>
             <span className="text-xs uppercase tracking-widest">Scroll</span>
+          </div>
+        </div>
+
+        {/* Mensagem de boas-vindas - animada com scroll */}
+        <div
+          ref={welcomeRef}
+          className="absolute inset-0 flex flex-col items-center justify-center z-30 pointer-events-none"
+        >
+          <div className="text-center">
+            <h2 className="text-2xl md:text-4xl font-light text-white/80 tracking-widest uppercase mb-4">
+              Bem-vindo
+            </h2>
+            <p className="text-sm md:text-base text-white/50 tracking-wider">
+              Uma experiência interativa aguarda você
+            </p>
           </div>
         </div>
 
