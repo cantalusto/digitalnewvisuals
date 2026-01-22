@@ -11,10 +11,16 @@ interface Hero3DProps {
   onAnimationComplete?: () => void;
 }
 
-const ITEMS = [
+// Menos palavras no mobile para melhor performance
+const ITEMS_DESKTOP = [
   'Code', 'Design', 'Growth', 'Nest', 'Web', 'App',
   'UI/UX', 'SEO', 'React', 'Digital', 'Scale', 'Future',
   'Brand', 'Ideas', 'Motion', '3D',
+];
+
+const ITEMS_MOBILE = [
+  'Code', 'Design', 'Growth', 'Nest',
+  'Web', 'Digital', 'Scale', 'Future',
 ];
 
 export const Hero3D = ({ onAnimationComplete }: Hero3DProps) => {
@@ -26,6 +32,16 @@ export const Hero3D = ({ onAnimationComplete }: Hero3DProps) => {
   const scrollIndicatorRef = useRef<HTMLDivElement>(null);
   const welcomeRef = useRef<HTMLDivElement>(null);
   const [isComplete, setIsComplete] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  const ITEMS = isMobile ? ITEMS_MOBILE : ITEMS_DESKTOP;
 
   useEffect(() => {
     if (!containerRef.current || !stickyRef.current || !titleRef.current) return;
@@ -136,7 +152,7 @@ export const Hero3D = ({ onAnimationComplete }: Hero3DProps) => {
   }, [onAnimationComplete, isComplete]);
 
   return (
-    <div ref={containerRef} className="relative h-[300vh]">
+    <div ref={containerRef} className="relative h-[200vh] md:h-[300vh]">
       {/* Sticky container */}
       <div
         ref={stickyRef}
@@ -144,7 +160,7 @@ export const Hero3D = ({ onAnimationComplete }: Hero3DProps) => {
       >
         {/* 3D Grid Container for flying words */}
         <div
-          className="absolute inset-0 grid grid-cols-4 grid-rows-4 place-items-center"
+          className="absolute inset-0 grid grid-cols-2 grid-rows-4 md:grid-cols-4 md:grid-rows-4 place-items-center px-4 md:px-0"
           style={{
             perspective: '1000px',
             transformStyle: 'preserve-3d',
@@ -157,7 +173,7 @@ export const Hero3D = ({ onAnimationComplete }: Hero3DProps) => {
               <div
                 key={i}
                 ref={(el) => { itemsRef.current[i] = el; }}
-                className={`text-[4vmin] font-light uppercase tracking-widest font-mono ${
+                className={`text-[5vmin] md:text-[4vmin] font-light uppercase tracking-widest font-mono ${
                   isSpecial
                     ? 'text-[#00FF41] font-bold'
                     : 'text-white/30'

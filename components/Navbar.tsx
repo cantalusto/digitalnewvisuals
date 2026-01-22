@@ -59,9 +59,9 @@ export const Navbar = () => {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
           transition={{ duration: 0.3 }}
-          className="fixed top-0 left-0 w-full z-50 px-6 py-6 mix-blend-difference text-white flex justify-between items-center"
+          className="fixed top-0 left-0 w-full z-50 px-4 md:px-6 py-4 md:py-6 mix-blend-difference text-white flex justify-between items-center"
         >
-          <div className="w-48">
+          <div className="w-32 md:w-48">
             <AnimatePresence>
               {showLogo && (
                 <motion.div
@@ -69,7 +69,7 @@ export const Navbar = () => {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
                   transition={{ duration: 0.3 }}
-                  className="text-2xl font-bold tracking-tighter uppercase font-mono"
+                  className="text-lg md:text-2xl font-bold tracking-tighter uppercase font-mono"
                 >
                   Digital<span className="text-[#00FF41]">Nest</span>
                 </motion.div>
@@ -113,36 +113,49 @@ export const Navbar = () => {
           </div>
 
           <div className="md:hidden">
-            <button onClick={() => setIsOpen(!isOpen)}>
-              {isOpen ? <X /> : <Menu />}
+            <button
+              onClick={() => setIsOpen(!isOpen)}
+              className="p-2 -mr-2"
+              aria-label={isOpen ? 'Fechar menu' : 'Abrir menu'}
+            >
+              {isOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
           </div>
 
           {/* Mobile Menu */}
-          {isOpen && (
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="absolute top-full left-0 w-full bg-black/95 backdrop-blur-lg p-6 flex flex-col gap-4 md:hidden"
-            >
-              {['Sobre', 'Serviços', 'Projetos', 'Contato'].map((item, i) => {
-                const isActive = activeSection === item.toLowerCase();
-                return (
-                  <a
-                    key={i}
-                    href={`#${item.toLowerCase()}`}
-                    className={`text-xl uppercase tracking-widest transition-colors ${
-                      isActive ? 'text-[#00FF41]' : 'hover:text-[#00FF41]'
-                    }`}
-                    onClick={() => setIsOpen(false)}
-                  >
-                    {isActive && <span className="mr-2">→</span>}
-                    {item}
-                  </a>
-                );
-              })}
-            </motion.div>
-          )}
+          <AnimatePresence>
+            {isOpen && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.3 }}
+                className="absolute top-full left-0 w-full bg-black/95 backdrop-blur-lg overflow-hidden md:hidden"
+              >
+                <div className="p-6 flex flex-col gap-6">
+                  {['Sobre', 'Serviços', 'Projetos', 'Contato'].map((item, i) => {
+                    const isActive = activeSection === item.toLowerCase();
+                    return (
+                      <motion.a
+                        key={i}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: i * 0.1 }}
+                        href={`#${item.toLowerCase()}`}
+                        className={`text-2xl uppercase tracking-widest transition-colors flex items-center ${
+                          isActive ? 'text-[#00FF41]' : 'text-white'
+                        }`}
+                        onClick={() => setIsOpen(false)}
+                      >
+                        {isActive && <span className="mr-3 text-[#00FF41]">→</span>}
+                        {item}
+                      </motion.a>
+                    );
+                  })}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.nav>
       )}
     </AnimatePresence>

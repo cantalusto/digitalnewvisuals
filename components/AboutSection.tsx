@@ -282,9 +282,9 @@ const TimelineSection = () => {
           <motion.div
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, amount: 0.6 }}
+            viewport={{ once: true, amount: 0.4 }}
             variants={{
-              hidden: { opacity: 0, x: i % 2 === 0 ? -80 : 80, scale: 0.95 },
+              hidden: { opacity: 0, x: i % 2 === 0 ? -40 : 40, scale: 0.95 },
               visible: {
                 opacity: 1,
                 x: 0,
@@ -296,7 +296,7 @@ const TimelineSection = () => {
                 }
               }
             }}
-            className="relative z-10 text-center px-8 py-12 max-w-3xl mx-auto rounded-3xl
+            className="relative z-10 text-center px-4 py-8 md:px-8 md:py-12 max-w-[95vw] md:max-w-3xl mx-auto rounded-2xl md:rounded-3xl
                        bg-white/5 backdrop-blur-xl border border-white/10
                        shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.1)]"
           >
@@ -310,9 +310,9 @@ const TimelineSection = () => {
                 hidden: { opacity: 0, x: -20 },
                 visible: { opacity: 1, x: 0 }
               }}
-              className="inline-block mb-6"
+              className="inline-block mb-4 md:mb-6"
             >
-              <span className="bg-[#00FF41] text-black px-8 py-4 rounded-2xl font-mono font-bold text-2xl md:text-3xl
+              <span className="bg-[#00FF41] text-black px-6 py-3 md:px-8 md:py-4 rounded-xl md:rounded-2xl font-mono font-bold text-xl md:text-3xl
                              shadow-[0_0_30px_rgba(0,255,65,0.4)]">
                 {item.year}
               </span>
@@ -324,7 +324,7 @@ const TimelineSection = () => {
                 hidden: { opacity: 0, x: -30 },
                 visible: { opacity: 1, x: 0 }
               }}
-              className="text-5xl md:text-7xl font-black mb-4 tracking-tight text-white"
+              className="text-3xl md:text-7xl font-black mb-2 md:mb-4 tracking-tight text-white"
             >
               {item.title}
             </motion.h3>
@@ -335,7 +335,7 @@ const TimelineSection = () => {
                 hidden: { opacity: 0, x: -20 },
                 visible: { opacity: 1, x: 0 }
               }}
-              className="text-[#00FF41] text-xl md:text-2xl font-medium mb-6"
+              className="text-[#00FF41] text-base md:text-2xl font-medium mb-4 md:mb-6"
             >
               {item.subtitle}
             </motion.p>
@@ -346,7 +346,7 @@ const TimelineSection = () => {
                 hidden: { opacity: 0, x: -15 },
                 visible: { opacity: 1, x: 0 }
               }}
-              className="text-gray-300 text-lg md:text-xl leading-relaxed max-w-2xl mx-auto mb-8"
+              className="text-gray-300 text-sm md:text-xl leading-relaxed max-w-2xl mx-auto mb-6 md:mb-8"
             >
               {item.description}
             </motion.p>
@@ -357,13 +357,13 @@ const TimelineSection = () => {
                 hidden: { opacity: 0, x: -10 },
                 visible: { opacity: 1, x: 0 }
               }}
-              className="flex flex-wrap justify-center gap-3"
+              className="flex flex-wrap justify-center gap-2 md:gap-3"
             >
               {item.highlights.map((highlight, j) => (
                 <span
                   key={j}
-                  className="text-sm uppercase tracking-wider text-white
-                             bg-white/10 backdrop-blur-md px-5 py-2 rounded-xl
+                  className="text-xs md:text-sm uppercase tracking-wider text-white
+                             bg-white/10 backdrop-blur-md px-3 py-1.5 md:px-5 md:py-2 rounded-lg md:rounded-xl
                              border border-white/20 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]"
                 >
                   {highlight}
@@ -423,8 +423,8 @@ export const AboutSection = () => {
       className="bg-black text-white relative overflow-hidden"
     >
       {/* ========== BLOCO 1: HERO ========== */}
-      <div ref={heroRef} className="min-h-screen flex flex-col items-center justify-center py-24">
-        <div className="relative w-full max-w-7xl mx-auto flex flex-col items-center justify-center text-[15vw] md:text-[20vw] font-black leading-none tracking-tighter uppercase select-none">
+      <div ref={heroRef} className="min-h-screen flex flex-col items-center justify-center py-12 md:py-24">
+        <div className="relative w-full max-w-7xl mx-auto flex flex-col items-center justify-center text-[18vw] md:text-[20vw] font-black leading-none tracking-tighter uppercase select-none">
           {/* Layer 1: "SOBRE" com Parallax 3D */}
           <div className="relative z-10 flex">
             {sobreLetters.map((letter, i) => (
@@ -441,7 +441,7 @@ export const AboutSection = () => {
             ))}
           </div>
 
-          {/* Layer 2: Planet - Moves between layers (3x mais rápido) */}
+          {/* Layer 2: Planet - Moves between layers */}
           <motion.div
             style={{
               left: planetX,
@@ -449,11 +449,11 @@ export const AboutSection = () => {
               scale: planetScale,
               zIndex: 20,
             }}
-            className="absolute top-1/2 -translate-y-1/2 w-[25vw] h-[25vw] rounded-full bg-gradient-to-br from-[#00FF41] to-black shadow-[0_0_100px_rgba(0,255,65,0.4)] border border-[#00FF41]/30 flex items-center justify-center backdrop-blur-sm"
+            className="absolute top-1/2 -translate-y-1/2 w-[35vw] h-[35vw] md:w-[25vw] md:h-[25vw] rounded-full bg-gradient-to-br from-[#00FF41] to-black shadow-[0_0_60px_rgba(0,255,65,0.4)] md:shadow-[0_0_100px_rgba(0,255,65,0.4)] border border-[#00FF41]/30 flex items-center justify-center backdrop-blur-sm"
           >
             <div className="w-[90%] h-[90%] rounded-full border border-white/10 relative overflow-hidden">
               <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-50"></div>
-              <div className="absolute top-4 left-4 w-4 h-4 bg-white rounded-full blur-[2px]"></div>
+              <div className="absolute top-2 left-2 md:top-4 md:left-4 w-2 h-2 md:w-4 md:h-4 bg-white rounded-full blur-[2px]"></div>
             </div>
           </motion.div>
 
@@ -461,12 +461,12 @@ export const AboutSection = () => {
           <div className="relative z-30 text-transparent stroke-text-white">NÓS</div>
         </div>
 
-        <div className="max-w-3xl text-center mt-12 px-6 relative z-40">
+        <div className="max-w-3xl text-center mt-8 md:mt-12 px-4 md:px-6 relative z-40">
           <motion.p
             initial={{ opacity: 0, y: 50 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-xl md:text-2xl font-light text-gray-400"
+            className="text-base md:text-2xl font-light text-gray-400 leading-relaxed"
           >
             Não somos apenas uma agência. Somos{' '}
             <span className="text-white font-medium">arquitetos digitais</span> que transformam visões em realidade.
@@ -477,7 +477,7 @@ export const AboutSection = () => {
       </div>
 
       {/* ========== BLOCO 2: ESTATÍSTICAS ========== */}
-      <div className="py-24 px-6">
+      <div className="py-16 md:py-24 px-4 md:px-6">
         <div className="max-w-6xl mx-auto">
           <motion.h3
             initial={{ opacity: 0, y: 30 }}
