@@ -4,7 +4,8 @@
       "Bash(npm run build:*)",
       "WebFetch(domain:codepen.io)",
       "WebSearch",
-      "Bash(dir \"C:\\\\Users\\\\Lucas\\\\Documents\\\\developer\\\\digitalnewvisuals\\\\public\")"
+      "Bash(dir \"C:\\\\Users\\\\Lucas\\\\Documents\\\\developer\\\\digitalnewvisuals\\\\public\")",
+      "Bash(cd:*)"
     ]
   }
 }

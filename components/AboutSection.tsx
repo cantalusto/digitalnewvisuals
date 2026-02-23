@@ -1,8 +1,9 @@
 'use client';
 
 import { useRef, useState, useEffect } from 'react';
-import { motion, useScroll, useTransform, useInView } from 'framer-motion';
-import { Lightbulb, Shield, Zap, Users, Code, Palette, Terminal } from 'lucide-react';
+import { motion, useScroll, useTransform } from 'framer-motion';
+import { Code, Palette, Terminal } from 'lucide-react';
+import { AnimatePresence } from 'framer-motion';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
@@ -16,65 +17,647 @@ const getFramePath = (index: number) => {
   return `/digitalanimation/frame_${paddedIndex}_delay-0.${delay}s.jpg`;
 };
 
-// Componente de contador animado
-const AnimatedCounter = ({ value, suffix = '', duration = 2000 }: { value: number; suffix?: string; duration?: number }) => {
-  const [count, setCount] = useState(0);
-  const ref = useRef<HTMLSpanElement>(null);
-  const isInView = useInView(ref, { once: true });
+// SVG icon components for process steps
+const SearchIcon = ({ stroke = 'currentColor' }: { stroke?: string }) => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="11" cy="11" r="8" />
+    <path d="m21 21-4.3-4.3" />
+  </svg>
+);
+
+const TargetIcon = ({ stroke = 'currentColor' }: { stroke?: string }) => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10" />
+    <circle cx="12" cy="12" r="6" />
+    <circle cx="12" cy="12" r="2" />
+  </svg>
+);
+
+const PenToolIcon = ({ stroke = 'currentColor' }: { stroke?: string }) => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="m12 19 7-7 3 3-7 7-3-3z" />
+    <path d="m18 13-1.5-7.5L2 2l3.5 14.5L13 18l5-5z" />
+    <path d="m2 2 7.586 7.586" />
+    <circle cx="11" cy="11" r="2" />
+  </svg>
+);
+
+const TerminalIcon = ({ stroke = 'currentColor' }: { stroke?: string }) => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="4 17 10 11 4 5" />
+    <line x1="12" x2="20" y1="19" y2="19" />
+  </svg>
+);
+
+const RocketIcon = ({ stroke = 'currentColor' }: { stroke?: string }) => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z" />
+    <path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z" />
+    <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0" />
+    <path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5" />
+  </svg>
+);
+
+// Dados do processo de trabalho
+const processSteps = [
+  {
+    number: '01',
+    title: 'Discovery',
+    shortTitle: 'Discovery',
+    icon: SearchIcon,
+    description: 'Entendemos seu negócio, objetivos e público-alvo para criar a base do projeto.',
+    deliverables: ['Briefing completo', 'Análise de mercado', 'Definição de personas', 'Benchmark competitivo'],
+  },
+  {
+    number: '02',
+    title: 'Estratégia',
+    shortTitle: 'Estratégia',
+    icon: TargetIcon,
+    description: 'Planejamos cada passo do projeto com precisão cirúrgica.',
+    deliverables: ['Roadmap do projeto', 'Arquitetura de informação', 'Wireframes', 'Cronograma'],
+  },
+  {
+    number: '03',
+    title: 'Design',
+    shortTitle: 'Design',
+    icon: PenToolIcon,
+    description: 'Criamos a identidade visual e interfaces que encantam.',
+    deliverables: ['Design System', 'UI/UX Design', 'Protótipos interativos', 'Brand guidelines'],
+  },
+  {
+    number: '04',
+    title: 'Desenvolvimento',
+    shortTitle: 'Dev',
+    icon: TerminalIcon,
+    description: 'Transformamos design em código limpo e performático.',
+    deliverables: ['Frontend responsivo', 'Backend escalável', 'Integrações API', 'Testes automatizados'],
+  },
+  {
+    number: '05',
+    title: 'Lançamento',
+    shortTitle: 'Launch',
+    icon: RocketIcon,
+    description: 'Deploy, testes finais e acompanhamento pós-lançamento.',
+    deliverables: ['Deploy em produção', 'Testes de performance', 'Monitoramento', 'Suporte contínuo'],
+  },
+];
+
+// Componente ProcessSection
+const ProcessSection = () => {
+  const [activeStep, setActiveStep] = useState(0);
+  const [hasEntered, setHasEntered] = useState(false);
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const sectionRef = useRef<HTMLDivElement>(null);
+  const pinRef = useRef<HTMLDivElement>(null);
+  const orbitPathRef = useRef<SVGPathElement>(null);
+  const nodeRefs = useRef<(SVGGElement | null)[]>([]);
+  const headerRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const svgContainerRef = useRef<HTMLDivElement>(null);
+
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    if (!isInView) return;
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
-    let start = 0;
-    const end = value;
-    const increment = end / (duration / 16);
+  const orbitRadius = isMobile ? 100 : 150;
+  const svgSize = isMobile ? 340 : 460;
+  const centerX = svgSize / 2;
+  const centerY = svgSize / 2;
 
-    const timer = setInterval(() => {
-      start += increment;
-      if (start >= end) {
-        setCount(end);
-        clearInterval(timer);
-      } else {
-        setCount(Math.floor(start));
-      }
-    }, 16);
+  const getPointPos = (index: number) => {
+    const angle = ((2 * Math.PI) / processSteps.length) * index - Math.PI / 2;
+    return {
+      x: centerX + orbitRadius * Math.cos(angle),
+      y: centerY + orbitRadius * Math.sin(angle),
+      angle,
+    };
+  };
 
-    return () => clearInterval(timer);
-  }, [isInView, value, duration]);
+  // Get label position: pushed outward from center along the node's angle
+  const getLabelPos = (index: number, nodeR: number) => {
+    const { angle } = getPointPos(index);
+    const labelDist = orbitRadius + nodeR + 16;
+    return {
+      x: centerX + labelDist * Math.cos(angle),
+      y: centerY + labelDist * Math.sin(angle),
+    };
+  };
 
-  return <span ref={ref}>{count}{suffix}</span>;
+  const buildOrbitPath = () => {
+    const points = processSteps.map((_, i) => getPointPos(i));
+    let d = `M ${points[0].x} ${points[0].y}`;
+    for (let i = 1; i < points.length; i++) {
+      d += ` L ${points[i].x} ${points[i].y}`;
+    }
+    d += ' Z';
+    return d;
+  };
+
+  // Build progress path — open polyline from node 0 to the active node
+  const buildProgressPath = () => {
+    if (activeStep === 0) return '';
+    const points = processSteps.map((_, i) => getPointPos(i));
+    let d = `M ${points[0].x} ${points[0].y}`;
+    for (let i = 1; i <= activeStep; i++) {
+      d += ` L ${points[i].x} ${points[i].y}`;
+    }
+    return d;
+  };
+
+  // Entrance + scroll + exit animations via GSAP
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    gsap.registerPlugin(ScrollTrigger);
+
+    const section = sectionRef.current;
+    const pin = pinRef.current;
+    if (!section || !pin) return;
+
+    // --- Entrance animation timeline ---
+    const enterTl = gsap.timeline({ paused: true });
+
+    // 1. Header slides down
+    if (headerRef.current) {
+      enterTl.fromTo(
+        headerRef.current,
+        { opacity: 0, y: -40 },
+        { opacity: 1, y: 0, duration: 0.6, ease: 'power3.out' },
+        0
+      );
+    }
+
+    // 2. Orbit path draws itself
+    if (orbitPathRef.current) {
+      const pathLength = orbitPathRef.current.getTotalLength();
+      gsap.set(orbitPathRef.current, {
+        strokeDasharray: pathLength,
+        strokeDashoffset: pathLength,
+      });
+      enterTl.to(
+        orbitPathRef.current,
+        { strokeDashoffset: 0, duration: 1.2, ease: 'power2.inOut' },
+        0.2
+      );
+    }
+
+    // 3. Nodes pop in sequentially
+    nodeRefs.current.forEach((node, i) => {
+      if (!node) return;
+      gsap.set(node, { opacity: 0, scale: 0, transformOrigin: 'center center' });
+      enterTl.to(
+        node,
+        { opacity: 1, scale: 1, duration: 0.4, ease: 'back.out(2)' },
+        0.4 + i * 0.12
+      );
+    });
+
+    // 4. Content panel slides in
+    if (contentRef.current) {
+      enterTl.fromTo(
+        contentRef.current,
+        { opacity: 0, x: 60 },
+        { opacity: 1, x: 0, duration: 0.7, ease: 'power3.out' },
+        0.8
+      );
+    }
+
+    // --- ScrollTrigger: entrance trigger ---
+    ScrollTrigger.create({
+      trigger: section,
+      start: 'top 80%',
+      once: true,
+      onEnter: () => {
+        setHasEntered(true);
+        enterTl.play();
+      },
+    });
+
+    // Scroll area: first 85% is for stepping, last 15% is for exit animation
+    const totalStepRange = 0.85;
+
+    // --- ScrollTrigger: pin + step control + exit ---
+    const st = ScrollTrigger.create({
+      trigger: section,
+      start: 'top top',
+      end: `+=${(processSteps.length + 1) * 100}%`,
+      pin: pin,
+      scrub: 0.5,
+      onUpdate: (self) => {
+        setScrollProgress(self.progress);
+
+        // Steps advance within the first 85% of scroll
+        if (self.progress <= totalStepRange) {
+          const stepProgress = self.progress / totalStepRange;
+          const step = Math.min(
+            Math.floor(stepProgress * processSteps.length),
+            processSteps.length - 1
+          );
+          setActiveStep(step);
+        }
+
+        // Exit animation: last 15% — scale down, fade out, blur
+        const exitProgress = Math.max(0, (self.progress - totalStepRange) / (1 - totalStepRange));
+        if (pin) {
+          if (exitProgress > 0) {
+            const scale = 1 - exitProgress * 0.15;
+            const opacity = 1 - exitProgress;
+            const blur = exitProgress * 20;
+            pin.style.transform = `scale(${scale})`;
+            pin.style.opacity = `${opacity}`;
+            pin.style.filter = `blur(${blur}px)`;
+          } else {
+            pin.style.transform = '';
+            pin.style.opacity = hasEntered ? '1' : '0';
+            pin.style.filter = '';
+          }
+        }
+      },
+    });
+
+    return () => {
+      enterTl.kill();
+      st.kill();
+    };
+  }, [isMobile, orbitRadius, centerX, centerY, hasEntered]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const currentStep = processSteps[activeStep];
+  const isLastStep = activeStep === processSteps.length - 1;
+  const closingPathRef = useRef<SVGPathElement>(null);
+  const celebrationRef = useRef<SVGGElement>(null);
+  const glowRingRef = useRef<SVGPathElement>(null);
+  const celebrationRan = useRef(false);
+
+  // Build closing segment: from last node back to first node
+  const buildClosingPath = () => {
+    const lastPos = getPointPos(processSteps.length - 1);
+    const firstPos = getPointPos(0);
+    return `M ${lastPos.x} ${lastPos.y} L ${firstPos.x} ${firstPos.y}`;
+  };
+
+  // Calculate closing path length for animation
+  const closingPathLengthCalc = () => {
+    const lastPos = getPointPos(processSteps.length - 1);
+    const firstPos = getPointPos(0);
+    return Math.sqrt(Math.pow(firstPos.x - lastPos.x, 2) + Math.pow(firstPos.y - lastPos.y, 2));
+  };
+  const closingPathLength = closingPathLengthCalc();
+
+  // GSAP celebration animation when reaching last step
+  useEffect(() => {
+    if (!isLastStep || celebrationRan.current) return;
+    celebrationRan.current = true;
+
+    const tl = gsap.timeline();
+
+    // 1. Animate closing path drawing
+    if (closingPathRef.current) {
+      const len = closingPathLength;
+      gsap.set(closingPathRef.current, { strokeDasharray: len, strokeDashoffset: len });
+      tl.to(closingPathRef.current, { strokeDashoffset: 0, duration: 0.8, ease: 'power2.inOut' }, 0);
+    }
+
+    // 2. Glow ring pulses
+    if (glowRingRef.current) {
+      tl.fromTo(glowRingRef.current,
+        { opacity: 0 },
+        { opacity: 0.6, duration: 0.5, ease: 'power2.in' },
+        0.4
+      );
+      tl.to(glowRingRef.current, { opacity: 0.2, duration: 1.5, ease: 'power2.out', yoyo: true, repeat: 2 }, 0.9);
+    }
+
+    // 3. Burst particles
+    if (celebrationRef.current) {
+      const particles = celebrationRef.current.querySelectorAll('.burst-particle');
+      particles.forEach((p, i) => {
+        tl.fromTo(p,
+          { opacity: 0, scale: 0, transformOrigin: 'center center' },
+          { opacity: 1, scale: 1, duration: 0.4, ease: 'back.out(3)' },
+          0.6 + i * 0.06
+        );
+        tl.to(p,
+          { opacity: 0, scale: 0.5, duration: 0.6, ease: 'power2.in' },
+          1.2 + i * 0.04
+        );
+      });
+    }
+
+    return () => { tl.kill(); };
+  }, [isLastStep, closingPathLength]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Reset celebration flag when leaving last step
+  useEffect(() => {
+    if (!isLastStep) {
+      celebrationRan.current = false;
+    }
+  }, [isLastStep]);
+
+  return (
+    <div ref={sectionRef} style={{ height: `${(processSteps.length + 1) * 100}vh` }}>
+      <div
+        ref={pinRef}
+        className="h-screen bg-black flex flex-col md:flex-row items-center justify-center px-4 md:px-6 overflow-hidden relative"
+        style={{ opacity: hasEntered ? 1 : 0, willChange: 'transform, opacity, filter' }}
+      >
+        {/* Section header */}
+        <div ref={headerRef} className="absolute top-8 left-0 right-0 z-10 text-center" style={{ opacity: 0 }}>
+          <span className="text-sm uppercase tracking-[0.3em] text-gray-500">
+            Nosso Processo
+          </span>
+          <h2 className="text-3xl md:text-5xl font-bold mt-2">
+            Como <span className="text-[#00FF41]">Trabalhamos</span>
+          </h2>
+        </div>
+
+        {/* Orbital SVG */}
+        <div ref={svgContainerRef} className="relative flex-shrink-0 mt-24 md:mt-0">
+          <svg
+            width={svgSize}
+            height={svgSize}
+            viewBox={`0 0 ${svgSize} ${svgSize}`}
+            className="select-none"
+          >
+            {/* === Layer 1: Lines (behind everything) === */}
+            {/* Orbit ring (background) — draws itself on entrance */}
+            <path
+              ref={orbitPathRef}
+              d={buildOrbitPath()}
+              fill="none"
+              stroke="rgba(255,255,255,0.1)"
+              strokeWidth="1.5"
+              strokeLinejoin="round"
+            />
+
+            {/* Progress line — green, segment-based, follows active step */}
+            {activeStep > 0 && (
+              <path
+                d={buildProgressPath()}
+                fill="none"
+                stroke="#00FF41"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="transition-all duration-700 ease-in-out"
+                style={{
+                  filter: 'drop-shadow(0 0 8px rgba(0,255,65,0.4))',
+                }}
+              />
+            )}
+
+            {/* Celebration: closing segment from last node back to first when on last step */}
+            {isLastStep && (
+              <path
+                ref={closingPathRef}
+                d={buildClosingPath()}
+                fill="none"
+                stroke="#00FF41"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                style={{
+                  filter: 'drop-shadow(0 0 12px rgba(0,255,65,0.6))',
+                }}
+              />
+            )}
+
+            {/* === Layer 2: Nodes (on top of lines) === */}
+            {/* Celebration: burst particles + glow ring when orbit completes */}
+            {isLastStep && (
+              <>
+                <path
+                  ref={glowRingRef}
+                  d={buildOrbitPath()}
+                  fill="none"
+                  stroke="#00FF41"
+                  strokeWidth="2"
+                  strokeLinejoin="round"
+                  opacity="0"
+                  style={{ filter: 'drop-shadow(0 0 16px rgba(0,255,65,0.8)) drop-shadow(0 0 4px rgba(0,255,65,1))' }}
+                />
+                <g ref={celebrationRef}>
+                  {Array.from({ length: 12 }).map((_, pi) => {
+                    const burstAngle = (2 * Math.PI / 12) * pi;
+                    const burstR = orbitRadius + 40;
+                    const bx = centerX + burstR * Math.cos(burstAngle);
+                    const by = centerY + burstR * Math.sin(burstAngle);
+                    return (
+                      <circle
+                        key={`burst-${pi}`}
+                        className="burst-particle"
+                        cx={bx}
+                        cy={by}
+                        r="3"
+                        fill="#00FF41"
+                        opacity="0"
+                        style={{ filter: 'drop-shadow(0 0 6px rgba(0,255,65,0.8))' }}
+                      />
+                    );
+                  })}
+                </g>
+              </>
+            )}
+
+            {processSteps.map((step, i) => {
+              const pos = getPointPos(i);
+              const isActive = i === activeStep;
+              const isPast = i < activeStep;
+              const IconComponent = step.icon;
+              const nodeR = isActive ? 28 : 22;
+
+              return (
+                <g
+                  key={i}
+                  ref={(el) => { nodeRefs.current[i] = el; }}
+                  onClick={() => setActiveStep(i)}
+                  className="cursor-pointer"
+                  style={{ opacity: 0 }}
+                >
+                  {/* Outer pulse rings for active */}
+                  {isActive && (
+                    <>
+                      <circle
+                        cx={pos.x}
+                        cy={pos.y}
+                        r={42}
+                        fill="none"
+                        stroke="rgba(0,255,65,0.15)"
+                        strokeWidth="1"
+                        className="animate-ping"
+                        style={{ animationDuration: '2s' }}
+                      />
+                      <circle
+                        cx={pos.x}
+                        cy={pos.y}
+                        r={36}
+                        fill="rgba(0,255,65,0.08)"
+                      />
+                    </>
+                  )}
+
+                  {/* Background fill to cover lines behind the node */}
+                  <circle
+                    cx={pos.x}
+                    cy={pos.y}
+                    r={nodeR + 2}
+                    fill="#000000"
+                    stroke="none"
+                  />
+
+                  {/* Node circle */}
+                  <circle
+                    cx={pos.x}
+                    cy={pos.y}
+                    r={nodeR}
+                    fill={isActive ? '#00FF41' : isPast ? 'rgba(0,255,65,0.15)' : 'rgba(255,255,255,0.04)'}
+                    stroke={isActive ? '#00FF41' : isPast ? 'rgba(0,255,65,0.6)' : 'rgba(255,255,255,0.12)'}
+                    strokeWidth={isActive ? 2.5 : 1}
+                    className="transition-all duration-500"
+                    style={isActive ? {
+                      filter: 'drop-shadow(0 0 16px rgba(0,255,65,0.7)) drop-shadow(0 0 4px rgba(0,255,65,0.9))',
+                    } : isPast ? {
+                      filter: 'drop-shadow(0 0 4px rgba(0,255,65,0.2))',
+                    } : {}}
+                  />
+
+                  {/* SVG Icon centered in node */}
+                  <foreignObject
+                    x={pos.x - 8}
+                    y={pos.y - 8}
+                    width={16}
+                    height={16}
+                    className="pointer-events-none"
+                  >
+                    <div className="flex items-center justify-center w-full h-full">
+                      <IconComponent
+                        stroke={isActive ? '#000000' : isPast ? '#00FF41' : 'rgba(255,255,255,0.35)'}
+                      />
+                    </div>
+                  </foreignObject>
+
+                  {/* Short title positioned outward from center */}
+                  {(() => {
+                    const labelPos = getLabelPos(i, nodeR);
+                    return (
+                      <text
+                        x={labelPos.x}
+                        y={labelPos.y}
+                        textAnchor="middle"
+                        dominantBaseline="central"
+                        className="pointer-events-none select-none transition-all duration-500"
+                        fill={isActive ? '#00FF41' : isPast ? 'rgba(0,255,65,0.7)' : 'rgba(255,255,255,0.25)'}
+                        fontSize={isMobile ? '7' : '8'}
+                        fontWeight="600"
+                        style={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}
+                      >
+                        {step.shortTitle}
+                      </text>
+                    );
+                  })()}
+                </g>
+              );
+            })}
+
+            {/* Center content (desktop only) */}
+            <foreignObject
+              x={centerX - 80}
+              y={centerY - 50}
+              width={160}
+              height={100}
+              className="hidden md:block pointer-events-none"
+            >
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeStep}
+                  initial={{ opacity: 0, scale: 0.85, filter: 'blur(8px)' }}
+                  animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+                  exit={{ opacity: 0, scale: 1.1, filter: 'blur(8px)' }}
+                  transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                  className="flex flex-col items-center justify-center h-full text-center"
+                >
+                  <span className="text-[#00FF41] font-mono text-xs tracking-widest mb-1">
+                    ETAPA {currentStep.number}
+                  </span>
+                  <span className="text-white font-bold text-base leading-tight">
+                    {currentStep.title}
+                  </span>
+                </motion.div>
+              </AnimatePresence>
+            </foreignObject>
+          </svg>
+        </div>
+
+        {/* Content panel */}
+        <div ref={contentRef} className="md:ml-12 mt-6 md:mt-0 max-w-md w-full" style={{ opacity: 0 }}>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeStep}
+              initial={{ opacity: 0, y: 30, filter: 'blur(6px)' }}
+              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+              exit={{ opacity: 0, y: -20, filter: 'blur(6px)' }}
+              transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+            >
+              {/* Mobile step indicator */}
+              <div className="md:hidden mb-3">
+                <span className="text-[#00FF41] font-mono text-sm tracking-widest">
+                  ETAPA {currentStep.number}
+                </span>
+              </div>
+
+              <h3 className="text-2xl md:text-4xl font-bold mb-3 text-white">
+                {currentStep.title}
+              </h3>
+
+              <p className="text-gray-400 text-sm md:text-base leading-relaxed mb-6">
+                {currentStep.description}
+              </p>
+
+              {/* Deliverables */}
+              <div className="space-y-2.5">
+                <span className="text-xs uppercase tracking-[0.2em] text-gray-600 block mb-3">
+                  Entregáveis
+                </span>
+                {currentStep.deliverables.map((item, i) => (
+                  <motion.div
+                    key={item}
+                    initial={{ opacity: 0, x: 16 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.15 + i * 0.08, ease: 'easeOut' }}
+                    className="flex items-center gap-3 text-sm text-gray-300"
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#00FF41] flex-shrink-0 shadow-[0_0_6px_rgba(0,255,65,0.6)]" />
+                    {item}
+                  </motion.div>
+                ))}
+              </div>
+
+              {/* Step dots indicator */}
+              <div className="flex gap-2 mt-8">
+                {processSteps.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setActiveStep(i)}
+                    className={`h-1.5 rounded-full transition-all duration-500 ${
+                      i === activeStep
+                        ? 'w-8 bg-[#00FF41] shadow-[0_0_8px_rgba(0,255,65,0.5)]'
+                        : i < activeStep
+                          ? 'w-3 bg-[#00FF41]/40'
+                          : 'w-3 bg-white/10'
+                    }`}
+                  />
+                ))}
+              </div>
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      </div>
+    </div>
+  );
 };
-
-// Dados
-const stats = [
-  { value: 50, suffix: '+', label: 'Projetos Entregues' },
-  { value: 30, suffix: '+', label: 'Clientes Satisfeitos' },
-  { value: 4, suffix: '+', label: 'Anos de Experiência' },
-  { value: 99, suffix: '%', label: 'Taxa de Satisfação' },
-];
-
-const valores = [
-  {
-    icon: Lightbulb,
-    title: 'Inovação',
-    description: 'Pensamos fora da caixa porque a caixa nos limita.',
-  },
-  {
-    icon: Shield,
-    title: 'Qualidade',
-    description: 'Bom não é suficiente. Buscamos o excepcional.',
-  },
-  {
-    icon: Zap,
-    title: 'Agilidade',
-    description: 'Velocidade com precisão. Entregamos no prazo, sempre.',
-  },
-  {
-    icon: Users,
-    title: 'Parceria',
-    description: 'Seu projeto é nosso projeto. Crescemos juntos.',
-  },
-];
 
 const timeline = [
   {
@@ -476,83 +1059,8 @@ export const AboutSection = () => {
         </div>
       </div>
 
-      {/* ========== BLOCO 2: ESTATÍSTICAS ========== */}
-      <div className="py-16 md:py-24 px-4 md:px-6">
-        <div className="max-w-6xl mx-auto">
-          <motion.h3
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center text-sm uppercase tracking-[0.3em] text-gray-500 mb-16"
-          >
-            Nossos Números
-          </motion.h3>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
-            {stats.map((stat, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 50 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className="text-center"
-              >
-                <div className="text-5xl md:text-7xl font-black text-[#00FF41] mb-2">
-                  <AnimatedCounter value={stat.value} suffix={stat.suffix} />
-                </div>
-                <div className="text-sm md:text-base text-gray-400 uppercase tracking-wider">
-                  {stat.label}
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* ========== BLOCO 3: VALORES ========== */}
-      <div className="py-24 px-6 bg-neutral-950">
-        <div className="max-w-6xl mx-auto">
-          <motion.h3
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center text-sm uppercase tracking-[0.3em] text-gray-500 mb-4"
-          >
-            O Que Nos Move
-          </motion.h3>
-          <motion.h2
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center text-4xl md:text-5xl font-bold mb-16"
-          >
-            Nossos <span className="text-[#00FF41]">Valores</span>
-          </motion.h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {valores.map((valor, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 50 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className="group relative rounded-2xl bg-neutral-900/50 border border-white/10 hover:border-[#00FF41] p-8 transition-all duration-500"
-              >
-                <div className="mb-6 text-[#00FF41] transition-transform duration-300 group-hover:scale-110">
-                  <valor.icon size={40} strokeWidth={1.5} />
-                </div>
-                <h4 className="text-xl font-bold mb-3">{valor.title}</h4>
-                <p className="text-gray-400 text-sm leading-relaxed">{valor.description}</p>
-
-                {/* Glow effect on hover */}
-                <div className="absolute inset-0 rounded-2xl bg-[#00FF41]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </div>
+      {/* ========== BLOCO 2: PROCESSO DE TRABALHO ORBITAL ========== */}
+      <ProcessSection />
 
       {/* ========== BLOCO 4: TIMELINE FULLSCREEN ========== */}
       <TimelineSection />
