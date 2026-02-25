@@ -39,11 +39,12 @@ All components are client-side (`'use client'`). The single page (`app/page.tsx`
 
 ### Key Patterns
 
-- **Custom hooks** (`hooks/`) encapsulate animation logic: `useLenis` sets up smooth scroll + GSAP sync, `useScrollProgress` tracks scroll phases, `useScrollLock` locks scroll during animations, `useCustomCursor` tracks mouse position
+- **Custom hooks** (`hooks/`) encapsulate animation logic: `useLenis` sets up Lenis smooth scroll + GSAP ticker sync, `useSmoothScroll` enables CSS smooth scrolling, `useScrollProgress` tracks scroll phases, `useScrollLock` locks scroll during animations, `useCustomCursor` tracks mouse position
 - **Barrel exports** via `index.ts` in `components/` and `hooks/`
 - **Path alias:** `@/*` maps to project root (configured in `tsconfig.json`)
 - **Mobile detection** in `page.tsx` uses `window.innerWidth < 768` and touch detection to conditionally render (e.g., custom cursor hidden on mobile, fewer Hero3D items)
-- **Frame animation** in AboutSection renders 192 sequential images from `public/digitalanimation/` onto a canvas, driven by scroll position
+- **Background video** in `page.tsx` — fixed fullscreen video (`/public/homevid.mp4`) fades out with blur as user scrolls to AboutSection
+- **Frame animation** in AboutSection renders 192 sequential images from `public/digitalanimation/` onto a canvas, driven by scroll position (naming: `frame_XXX_delay-0.04Xs.jpg`)
 
 ### Styling Conventions
 
