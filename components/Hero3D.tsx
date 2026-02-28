@@ -156,7 +156,7 @@ export const Hero3D = ({ onAnimationComplete }: Hero3DProps) => {
       {/* Sticky container */}
       <div
         ref={stickyRef}
-        className="sticky top-0 h-screen w-full overflow-hidden bg-[#050505]"
+        className="sticky top-0 h-screen w-full overflow-hidden"
       >
         {/* 3D Grid Container for flying words */}
         <div

@@ -1,7 +1,7 @@
 'use client';
 
-import { useRef, useState } from 'react';
-import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
+import { useRef, useState, useEffect } from 'react';
+import { motion, useScroll, useTransform, useSpring, AnimatePresence } from 'framer-motion';
 import { Code, Palette, Rocket, Zap, X, Check, ArrowRight, Sparkles } from 'lucide-react';
 
 // Dados detalhados dos serviços
@@ -373,23 +373,39 @@ const ExpandedCard = ({
 export const ServicesSection = () => {
   const targetRef = useRef<HTMLElement>(null);
   const [selectedService, setSelectedService] = useState<typeof services[0] | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const { scrollYProgress } = useScroll({
     target: targetRef,
   });
 
-  const x = useTransform(scrollYProgress, [0, 1], ['0%', '-65%']);
+  // Smooth spring animation for horizontal scroll
+  const smoothProgress = useSpring(scrollYProgress, {
+    stiffness: 100,
+    damping: 30,
+    restDelta: 0.001,
+  });
+
+  // Different scroll distance for mobile vs desktop
+  const x = useTransform(smoothProgress, [0, 1], ['0%', isMobile ? '-75%' : '-65%']);
 
   return (
     <>
-      <section ref={targetRef} id="serviços" className="relative h-[200vh] md:h-[300vh] bg-[#0a0a0a]">
+      <section ref={targetRef} id="serviços" className="relative h-[250vh] md:h-[300vh] bg-[#0a0a0a]">
         <div className="sticky top-0 flex h-screen items-center overflow-hidden">
           <div className="absolute top-20 md:top-24 left-4 md:left-10 text-white z-20">
             <h2 className="text-2xl md:text-4xl font-bold uppercase text-[#00FF41]">
               Nossos <br /> Serviços
             </h2>
           </div>
-          <motion.div style={{ x }} className="flex gap-4 md:gap-10 pl-[15vw] md:pl-[20vw]">
+          <motion.div style={{ x }} className="flex gap-4 md:gap-10 pl-[10vw] md:pl-[20vw]">
             {services.map((service, i) => {
               const Icon = service.icon;
               return (
@@ -397,7 +413,7 @@ export const ServicesSection = () => {
                   key={service.id}
                   layoutId={`card-${service.id}`}
                   onClick={() => setSelectedService(service)}
-                  className="group relative h-[55vh] md:h-[60vh] w-[85vw] md:w-[40vw] flex-shrink-0 overflow-hidden rounded-2xl md:rounded-3xl bg-neutral-900 border border-neutral-800 hover:border-[#00FF41] transition-colors duration-500 cursor-pointer"
+                  className="group relative h-[55vh] md:h-[60vh] w-[75vw] md:w-[40vw] flex-shrink-0 overflow-hidden rounded-2xl md:rounded-3xl bg-neutral-900 border border-neutral-800 hover:border-[#00FF41] transition-colors duration-500 cursor-pointer"
                 >
                   <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/90 z-10" />
                   <div className="absolute inset-0 flex items-center justify-center opacity-20 group-hover:opacity-40 transition-opacity duration-500">
@@ -420,16 +436,14 @@ export const ServicesSection = () => {
                     <p className="text-base md:text-xl text-gray-400 mb-4 md:mb-6">{service.desc}</p>
 
                     {/* Botão Saiba Mais - sempre visível no mobile, hover no desktop */}
-                    <div className="overflow-hidden">
-                      <button
-                        className="flex items-center gap-2 px-4 py-2 md:px-6 md:py-3 bg-[#00FF41] text-black font-bold rounded-full text-sm md:text-base
-                                   opacity-100 md:opacity-0 md:group-hover:opacity-100 translate-y-0 md:translate-y-4 md:group-hover:translate-y-0
-                                   transition-all duration-300 hover:scale-105 active:scale-95"
-                      >
-                        Saiba mais
-                        <ArrowRight size={16} className="md:w-[18px] md:h-[18px]" />
-                      </button>
-                    </div>
+                    <button
+                      className="flex items-center gap-2 px-4 py-2 md:px-6 md:py-3 bg-[#00FF41] text-black font-bold rounded-full text-sm md:text-base
+                                 opacity-100 md:opacity-0 md:group-hover:opacity-100 translate-y-0 md:translate-y-4 md:group-hover:translate-y-0
+                                 transition-all duration-300 hover:scale-105 active:scale-95"
+                    >
+                      Saiba mais
+                      <ArrowRight size={16} className="md:w-[18px] md:h-[18px]" />
+                    </button>
                   </div>
                 </motion.div>
               );
